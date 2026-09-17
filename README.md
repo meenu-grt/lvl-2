@@ -1,12 +1,16 @@
 # Focus Streak
 
-> A minimal Compact smart contract on Midnight that proves a focus session ran long enough to count, without ever revealing how long it actually ran.
+> A minimal Compact smart contract on Midnight that proves a focus session ran long enough to count, without ever revealing how long it actually ran — wired to a Lace-connected frontend on Preprod.
+
+## Live Demo
+
+`[PASTE LIVE URL AFTER DEPLOYING THE FRONTEND — Vercel/Netlify]`
 
 ## Contract Address
 
 | Network | Address |
 |---------|---------|
-| Preprod | `[PASTE CONTRACT ADDRESS AFTER DEPLOYING FROM THE FRONTEND]` |
+| Preprod | `a5a67ff1c7f8abd30d5ff0f3cbaedfc1c80fefbda8c7c4e5ca71170b5aceb0df` |
 
 ## Initial Idea
 
@@ -15,6 +19,22 @@ For this challenge, the goal was to get a real Compact contract deployed end-to-
 ## What This Does
 
 The contract tracks two independent public counters: `streak_count`, which only ever advances by a fixed amount of exactly 1 per qualifying check-in, and `total_minutes_logged`, a running total built entirely from values users chose to disclose. Calling `checkIn(minutes)` takes the session length as a private circuit input — the contract proves inside a zero-knowledge proof that `minutes >= 15` and then increments `streak_count` by the literal 1, never by anything derived from `minutes`. Calling `logMinutes(minutes)` takes the same shape of input but explicitly discloses it, adding the exact value to a public running total — this circuit exists specifically to be compared against `checkIn`, not as the main feature.
+
+## Wallet Connection
+
+`app/hooks/useWallet.ts` implements connect/disconnect against any Midnight-compatible wallet's DApp Connector API (tested against Lace on Preprod):
+- **Connect ("Link Wallet"):** detects `window.midnight`, calls `initialAPI.connect('preprod')`, verifies the wallet's own reported network id matches (`preprod`) before accepting the connection, and reads back the unshielded address for display.
+- **Disconnect ("×" on the wallet pill):** clears the connected API reference and local address/error state.
+- **Passive disconnect detection:** polls `getConnectionStatus()` every 5 seconds while linked, so if the wallet is locked or disconnected externally, the UI reflects that without a page reload.
+
+## Privacy Behavior Demonstrated
+
+This is the specific "observable privacy behavior" for Level 2 — something proven without being shown, visible end-to-end from the frontend down to the chain:
+
+1. Type a session length into **Check In** (e.g. `20`) and submit.
+2. The frontend calls `checkIn(20n)`, which becomes a **private circuit input** — it is used only to build a zero-knowledge proof locally in your browser (via the wallet's connected proof server) and is cleared from component state the instant the call returns (see `handleCheckIn` in `StreakPanel.tsx`).
+3. The proof establishes `effort_minutes >= 15` inside the circuit, but the number `20` itself never appears in the submitted transaction, never appears in `app/chain/contract.ts`'s return value, and never appears in the public ledger. Only `streak_count` moves, by exactly `+1`.
+4. Contrast this with **Log Minutes**, which calls `logMinutes(minutes)` — the *same shape* of input, but the circuit calls `disclose()` on it deliberately, so the exact number **does** land in `total_minutes_logged` on the public ledger. Running both side by side in the same UI is what makes the "proven without being shown" behavior observable rather than just asserted: one field's number can be read back off the chain, and the other's structurally cannot.
 
 ## Public State vs Private Witness
 
@@ -78,6 +98,10 @@ npm run test:run
 
 **16 tests passing** — circuit logic, state transitions, and privacy isolation (`effort_minutes` is verified to never appear in the public ledger, and two check-ins of very different real lengths are verified to produce identical public state).
 
+## Demo Video
+
+`[PASTE DEMO VIDEO LINK HERE — must show: wallet connect, then a successful checkIn circuit call confirming on-chain]`
+
 ## Screenshots
 
 **Contract compile output**
@@ -85,6 +109,9 @@ npm run test:run
 
 **Deployed contract address**
 `[PASTE SCREENSHOT HERE — the frontend after a successful deploy, showing the contract address]`
+
+**Wallet connected + circuit call confirmed**
+`[PASTE SCREENSHOT HERE — the frontend showing a linked wallet and a confirmed checkIn transaction]`
 
 ## Project Structure
 
