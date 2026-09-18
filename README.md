@@ -4,7 +4,7 @@
 
 ## Live Demo
 
-`[PASTE LIVE URL AFTER DEPLOYING THE FRONTEND — Vercel/Netlify]`
+[risein-midnight-lvl2.netlify.app](https://risein-midnight-lvl2.netlify.app/)
 
 ## Contract Address
 
@@ -100,7 +100,7 @@ npm run test:run
 
 ## Demo Video
 
-`[PASTE DEMO VIDEO LINK HERE — must show: wallet connect, then a successful checkIn circuit call confirming on-chain]`
+[Watch on Tella](https://www.tella.tv/video/midnight-lvl2-00gl) — wallet connect, then a successful `checkIn` circuit call confirming on-chain.
 
 ## Screenshots
 
